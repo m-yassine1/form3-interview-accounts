@@ -5,7 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -79,7 +79,7 @@ func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		bytes, _ := ioutil.ReadAll(resp.Body)
+		bytes, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("error fetching account %s with status %d response: %s", id, resp.StatusCode, string(bytes))
 	}
 
@@ -103,7 +103,7 @@ func (form3Api AccountApi) DeleteAccount(id string, version int) error {
 	resp, err := http.DefaultClient.Do(req)
 
 	if err != nil && (resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK) {
-		bytes, _ := ioutil.ReadAll(resp.Body)
+		bytes, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("failed to delete account %s with status code %d response: %s", id, resp.StatusCode, string(bytes))
 	}
 
@@ -125,7 +125,7 @@ func (form3Api AccountApi) CreateAccount(account model.AccountData) (*model.Acco
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		bytes, _ := ioutil.ReadAll(resp.Body)
+		bytes, _ := io.ReadAll(resp.Body)
 		return nil, fmt.Errorf("faile to create account with status %d response: %s", resp.StatusCode, string(bytes))
 	}
 

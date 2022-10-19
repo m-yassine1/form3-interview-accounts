@@ -7,33 +7,33 @@ import (
 )
 
 type AccountService struct {
-	form3Api *api.Form3Api
+	accountApi *api.AccountApi
 }
 
-func NewAccountService(form3Api *api.Form3Api) (*AccountService, error) {
+func NewAccountService(form3Api *api.AccountApi) (*AccountService, error) {
 	if form3Api == nil {
 		return nil, fmt.Errorf("error creating account service, fromApi is nil")
 	}
 
 	accountService := AccountService{
-		form3Api: form3Api,
+		accountApi: form3Api,
 	}
 
 	return &accountService, nil
 }
 
 func (accountService AccountService) GetAccounts() ([]model.Account, error) {
-	return accountService.form3Api.GetAccounts()
+	return accountService.accountApi.GetAccounts()
 }
 
 func (accountService AccountService) GetAccount(id string) (*model.Account, error) {
-	return accountService.form3Api.GetAccount(id)
+	return accountService.accountApi.GetAccount(id)
 }
 
-func (accountService AccountService) DeleteAccount(id string) error {
-	return accountService.form3Api.DeleteAccount(id)
+func (accountService AccountService) DeleteAccount(id string, version int) error {
+	return accountService.accountApi.DeleteAccount(id, version)
 }
 
 func (accountService AccountService) CreateAccount(accountBody model.AccountData) (*model.Account, error) {
-	return accountService.form3Api.CreateAccount(accountBody)
+	return accountService.accountApi.CreateAccount(accountBody)
 }

@@ -5,28 +5,30 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strings"
 )
 
-type Form3Api struct {
+type AccountApi struct {
 	url string
 }
 
 const createAccountPath = "/v1/organisation/accounts"
 const getAllAccountsPath = "/v1/organisation/accounts"
 const getAccountPath = "/v1/organisation/accounts/%s"
-const deleteAccountPath = "/v1/organisation/accounts/%s"
+const deleteAccountPath = "/v1/organisation/accounts/%s?version=%d"
 const applicationJsonContentType = "application/json"
 
-func NewForm3Api(url string) (*Form3Api, error) {
+func NewAccountApi(url string) (*AccountApi, error) {
 	_, err := validUrl(url)
 	if err != nil {
 		return nil, err
 	}
 
-	form3Api := &Form3Api{
-		url: fixUrlString(url),
+	form3Api := &AccountApi{
+		url: removeSlashEndOfHostname(url),
 	}
 
 	return form3Api, nil
@@ -46,14 +48,11 @@ func validUrl(urlString string) (bool, error) {
 	return true, nil
 }
 
-func fixUrlString(url string) string {
-	if url[len(url)-1] != '/' {
-		url += "/"
-	}
-	return url
+func removeSlashEndOfHostname(url string) string {
+	return strings.TrimSuffix(url, "/")
 }
 
-func (form3Api Form3Api) GetAccounts() ([]model.Account, error) {
+func (form3Api AccountApi) GetAccounts() ([]model.Account, error) {
 	resp, err := http.Get(form3Api.getUrl(getAllAccountsPath))
 	if err != nil {
 		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
@@ -71,13 +70,18 @@ func (form3Api Form3Api) GetAccounts() ([]model.Account, error) {
 	return data.Data, nil
 }
 
-func (form3Api Form3Api) GetAccount(id string) (*model.Account, error) {
+func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
 	resp, err := http.Get(form3Api.getUrl(fmt.Sprintf(getAccountPath, id)))
 	if err != nil {
 		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
 		return nil, fmt.Errorf("error fetching account %s", id)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		bytes, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("error fetching account %s with status %d response: %s", id, resp.StatusCode, string(bytes))
+	}
 
 	var data model.AccountData
 	err = json.NewDecoder(resp.Body).Decode(&data)
@@ -89,25 +93,27 @@ func (form3Api Form3Api) GetAccount(id string) (*model.Account, error) {
 	return &data.Data, nil
 }
 
-func (form3Api Form3Api) DeleteAccount(id string) error {
-	resp, err := http.NewRequest(http.MethodDelete, form3Api.getUrl(fmt.Sprintf(deleteAccountPath, id)), nil)
+func (form3Api AccountApi) DeleteAccount(id string, version int) error {
+	req, err := http.NewRequest(http.MethodDelete, form3Api.getUrl(fmt.Sprintf(deleteAccountPath, id, version)), nil)
 	if err != nil {
 		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return fmt.Errorf("error deleting account %s", id)
+		return fmt.Errorf("error creating delete account %s", id)
 	}
-	defer resp.Body.Close()
 
-	if resp.Response.StatusCode != http.StatusNoContent {
-		return fmt.Errorf("failed to delete account %s with status code %d", id, resp.Response.StatusCode)
+	resp, err := http.DefaultClient.Do(req)
+
+	if err != nil && (resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK) {
+		bytes, _ := ioutil.ReadAll(resp.Body)
+		return fmt.Errorf("failed to delete account %s with status code %d response: %s", id, resp.StatusCode, string(bytes))
 	}
 
 	return nil
 }
 
-func (form3Api Form3Api) CreateAccount(account model.AccountData) (*model.Account, error) {
+func (form3Api AccountApi) CreateAccount(account model.AccountData) (*model.Account, error) {
 	marshaledData, err := json.Marshal(account)
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
+		fmt.Printf("\n\n\n%T\n%s\n%#v\n", err, err, err)
 		return nil, fmt.Errorf("error parsing request account body %#v", account)
 	}
 
@@ -117,6 +123,11 @@ func (form3Api Form3Api) CreateAccount(account model.AccountData) (*model.Accoun
 		return nil, fmt.Errorf("error creating account %#v", account)
 	}
 	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusCreated {
+		bytes, _ := ioutil.ReadAll(resp.Body)
+		return nil, fmt.Errorf("faile to create account with status %d response: %s", resp.StatusCode, string(bytes))
+	}
 
 	var data model.AccountData
 	err = json.NewDecoder(resp.Body).Decode(&data)
@@ -128,6 +139,6 @@ func (form3Api Form3Api) CreateAccount(account model.AccountData) (*model.Accoun
 	return &data.Data, nil
 }
 
-func (form3Api Form3Api) getUrl(path string) string {
+func (form3Api AccountApi) getUrl(path string) string {
 	return form3Api.url + path
 }

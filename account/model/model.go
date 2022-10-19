@@ -28,7 +28,7 @@ type AccountAttributes struct {
 	Country                 *string  `json:"country,omitempty"`
 	Iban                    string   `json:"iban,omitempty"`
 	JointAccount            *bool    `json:"joint_account,omitempty"`
-	Name                    []string `json:"name,omitempty"`
+	Name                    []string `json:"name"`
 	SecondaryIdentification string   `json:"secondary_identification,omitempty"`
 	Status                  *string  `json:"status,omitempty"`
 	Switched                *bool    `json:"switched,omitempty"`

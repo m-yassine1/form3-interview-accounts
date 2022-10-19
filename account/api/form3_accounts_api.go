@@ -19,33 +19,17 @@ const getAccountPath = "/v1/organisation/accounts/%s"
 const deleteAccountPath = "/v1/organisation/accounts/%s"
 const applicationJsonContentType = "application/json"
 
-var form3Api *Form3Api = nil
-
 func NewForm3Api(url string) (*Form3Api, error) {
-	if form3Api != nil {
-		return form3Api, nil
-	}
-
 	_, err := validUrl(url)
 	if err != nil {
 		return nil, err
 	}
 
-	form3Api = &Form3Api{
+	form3Api := &Form3Api{
 		url: fixUrlString(url),
 	}
 
 	return form3Api, nil
-}
-
-func (form3Api *Form3Api) UpdateUrl(url string) error {
-	_, err := validUrl(url)
-	if err != nil {
-		return err
-	}
-
-	form3Api.url = fixUrlString(url)
-	return nil
 }
 
 func validUrl(urlString string) (bool, error) {

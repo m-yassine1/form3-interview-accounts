@@ -41,8 +41,7 @@ func validUrl(urlString string) (bool, error) {
 
 	_, err := url.ParseRequestURI(urlString)
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return false, fmt.Errorf("URL %s is invalid", urlString)
+		return false, fmt.Errorf("URL %s is invalid. Error: %s", urlString, err)
 	}
 
 	return true, nil
@@ -55,16 +54,19 @@ func removeSlashEndOfHostname(url string) string {
 func (form3Api AccountApi) GetAccounts() ([]model.Account, error) {
 	resp, err := http.Get(form3Api.getUrl(getAllAccountsPath))
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return []model.Account{}, fmt.Errorf("error fetching list of accounts")
+		return []model.Account{}, fmt.Errorf("error fetching list of accounts. Error: %s", err)
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		bytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("error fetching accounts with status %d response: %s", resp.StatusCode, string(bytes))
+	}
+
 	var data model.AccountsData
-	err = json.NewDecoder(resp.Body).Decode(&data)
+	err = FromJsonToModel(resp.Body, &data)
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return []model.Account{}, fmt.Errorf("unable to parse json response for list of accounts")
+		return []model.Account{}, fmt.Errorf("unable to parse json response for list of accounts. Error: %s", err)
 	}
 
 	return data.Data, nil
@@ -73,8 +75,7 @@ func (form3Api AccountApi) GetAccounts() ([]model.Account, error) {
 func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
 	resp, err := http.Get(form3Api.getUrl(fmt.Sprintf(getAccountPath, id)))
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return nil, fmt.Errorf("error fetching account %s", id)
+		return nil, fmt.Errorf("error fetching account %s. Error: %s", id, err)
 	}
 	defer resp.Body.Close()
 
@@ -84,10 +85,9 @@ func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
 	}
 
 	var data model.AccountData
-	err = json.NewDecoder(resp.Body).Decode(&data)
+	err = FromJsonToModel(resp.Body, &data)
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return nil, fmt.Errorf("unable to parse json response for account")
+		return nil, fmt.Errorf("unable to parse json response for account. Error: %s", err)
 	}
 
 	return &data.Data, nil
@@ -96,8 +96,7 @@ func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
 func (form3Api AccountApi) DeleteAccount(id string, version int) error {
 	req, err := http.NewRequest(http.MethodDelete, form3Api.getUrl(fmt.Sprintf(deleteAccountPath, id, version)), nil)
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return fmt.Errorf("error creating delete account %s", id)
+		return fmt.Errorf("error creating delete account %s. Error: %s", id, err)
 	}
 
 	resp, err := http.DefaultClient.Do(req)
@@ -113,14 +112,12 @@ func (form3Api AccountApi) DeleteAccount(id string, version int) error {
 func (form3Api AccountApi) CreateAccount(account model.AccountData) (*model.Account, error) {
 	marshaledData, err := json.Marshal(account)
 	if err != nil {
-		fmt.Printf("\n\n\n%T\n%s\n%#v\n", err, err, err)
-		return nil, fmt.Errorf("error parsing request account body %#v", account)
+		return nil, fmt.Errorf("error parsing request account body %#v. Error: %s", account, err)
 	}
 
 	resp, err := http.Post(form3Api.getUrl(createAccountPath), applicationJsonContentType, bytes.NewBuffer(marshaledData))
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return nil, fmt.Errorf("error creating account %#v", account)
+		return nil, fmt.Errorf("error creating account %#v. Error: %s", account, err)
 	}
 	defer resp.Body.Close()
 
@@ -130,10 +127,9 @@ func (form3Api AccountApi) CreateAccount(account model.AccountData) (*model.Acco
 	}
 
 	var data model.AccountData
-	err = json.NewDecoder(resp.Body).Decode(&data)
+	err = FromJsonToModel(resp.Body, &data)
 	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return nil, fmt.Errorf("unable to parse json response for creating account")
+		return nil, fmt.Errorf("unable to parse json response for creating account. Error: %s", err)
 	}
 
 	return &data.Data, nil

@@ -1,112 +1,69 @@
 package service
 
 import (
-	"encoding/json"
+	"account/api"
+	"account/model"
 	"fmt"
-	"net/http"
-	"net/url"
 )
 
-type AccountData struct {
-	Data []Account `json:"data,omitempty"`
-}
-
-type Account struct {
-	Attributes     *AccountAttributes `json:"attributes,omitempty"`
-	ID             string             `json:"id,omitempty"`
-	OrganisationID string             `json:"organisation_id,omitempty"`
-	Type           string             `json:"type,omitempty"`
-	Version        *int64             `json:"version,omitempty"`
-}
-
-type AccountAttributes struct {
-	AccountClassification   *string  `json:"account_classification,omitempty"`
-	AccountMatchingOptOut   *bool    `json:"account_matching_opt_out,omitempty"`
-	AccountNumber           string   `json:"account_number,omitempty"`
-	AlternativeNames        []string `json:"alternative_names,omitempty"`
-	BankID                  string   `json:"bank_id,omitempty"`
-	BankIDCode              string   `json:"bank_id_code,omitempty"`
-	BaseCurrency            string   `json:"base_currency,omitempty"`
-	Bic                     string   `json:"bic,omitempty"`
-	Country                 *string  `json:"country,omitempty"`
-	Iban                    string   `json:"iban,omitempty"`
-	JointAccount            *bool    `json:"joint_account,omitempty"`
-	Name                    []string `json:"name,omitempty"`
-	SecondaryIdentification string   `json:"secondary_identification,omitempty"`
-	Status                  *string  `json:"status,omitempty"`
-	Switched                *bool    `json:"switched,omitempty"`
-}
-
 type AccountService struct {
-	url string
+	form3Api *api.Form3Api
 }
 
 var accountService *AccountService = nil
+var form3Api *api.Form3Api = nil
 
-func NewAccountService(url string) (*AccountService, error) {
+func NewAccountService(form3Api *api.Form3Api) (*AccountService, error) {
 	if accountService != nil {
 		return accountService, nil
 	}
 
-	_, err := validUrl(url)
-	if err != nil {
-		return nil, err
+	if form3Api == nil {
+		return nil, fmt.Errorf("form3Api service is not initialized")
 	}
 
 	accountService = &AccountService{
-		url: fixUrlString(url),
+		form3Api: form3Api,
 	}
 
 	return accountService, nil
 }
 
-func (accountService *AccountService) UpdateUrl(url string) error {
-	_, err := validUrl(url)
+func (accountService AccountService) GetAccounts() ([]model.Account, error) {
+	accounts, err := form3Api.GetAccounts()
 	if err != nil {
+		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
+		return []model.Account{}, err
+	}
+	return accounts, nil
+}
+
+func (accountService AccountService) GetAccount(id string) (*model.Account, error) {
+	account, err := form3Api.GetAccount(id)
+	if err != nil {
+		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
+		return nil, err
+	}
+
+	return account, nil
+}
+
+func (accountService AccountService) DeleteAccount(id string) error {
+	err := form3Api.DeleteAccount(id)
+	if err != nil {
+		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
 		return err
 	}
 
-	accountService.url = fixUrlString(url)
 	return nil
 }
 
-func validUrl(urlString string) (bool, error) {
-	if urlString == "" {
-		return false, fmt.Errorf("URL string mst not be empty")
-	}
-
-	_, err := url.ParseRequestURI(urlString)
+func (accountService AccountService) CreateAccount(accountBody model.AccountData) (*model.Account, error) {
+	account, err := form3Api.CreateAccount(accountBody)
 	if err != nil {
 		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return false, fmt.Errorf("URL " + urlString + " is invalid")
+		return nil, err
 	}
 
-	return true, nil
-}
-
-func fixUrlString(url string) string {
-	if url[len(url)-1] != '/' {
-		url += "/"
-	}
-	return url
-}
-
-func (accountService AccountService) GetAccounts() ([]Account, error) {
-	url := accountService.url
-	resp, err := http.Get(url + "/v1/organisation/accounts")
-	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return []Account{}, fmt.Errorf("error fetching list of accounts")
-	}
-	defer resp.Body.Close()
-
-	var data AccountData
-	dec := json.NewDecoder(resp.Body)
-	err = dec.Decode(&data)
-	if err != nil {
-		fmt.Printf("%T\n%s\n%#v\n", err, err, err)
-		return []Account{}, fmt.Errorf("unable to parse json response")
-	}
-
-	return data.Data, nil
+	return account, nil
 }

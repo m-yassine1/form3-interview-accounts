@@ -26,6 +26,26 @@ func TestApiCreation(t *testing.T) {
 	assert.NotEmpty(t, accountApi, "Account API is empty for valid hostname")
 }
 
+func TestAccountApiHealthy(t *testing.T) {
+	accountApi, _ := getAccountApi()
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/v1/health", hostname),
+		httpmock.NewStringResponder(200, `{"status": "up"}`))
+	err := accountApi.IsHealthy()
+	assert.Empty(t, err, "Error is not empty")
+}
+
+func TestAccountApiNotHealthy(t *testing.T) {
+	accountApi, _ := getAccountApi()
+	httpmock.Activate()
+	defer httpmock.DeactivateAndReset()
+	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/v1/health", hostname),
+		httpmock.NewStringResponder(200, `{"status": "down"}`))
+	err := accountApi.IsHealthy()
+	assert.NotEmpty(t, err, "Error is empty")
+}
+
 func TestGetAccounts(t *testing.T) {
 	accountApi, _ := getAccountApi()
 	httpmock.Activate()
@@ -46,7 +66,7 @@ func TestFailedGetAccounts(t *testing.T) {
 		httpmock.NewStringResponder(400, ``))
 	accounts, err := accountApi.GetAccounts(nil)
 	assert.NotEmpty(t, err, "Error is not empty")
-	assert.NotEmpty(t, accounts, "Accounts list is empty")
+	assert.Empty(t, accounts, "Accounts list is empty")
 	assert.Equal(t, len(accounts), 0)
 }
 

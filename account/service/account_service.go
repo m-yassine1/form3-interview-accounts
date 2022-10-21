@@ -10,6 +10,7 @@ type AccountOperations interface {
 	GetAccount(id string) (*model.Account, error)
 	DeleteAccount(id string, version int) error
 	CreateAccount(accountBody model.AccountData) (*model.Account, error)
+	IsHealthy() error
 }
 
 type AccountService struct {
@@ -42,4 +43,8 @@ func (accountService AccountService) DeleteAccount(id string, version int) error
 
 func (accountService AccountService) CreateAccount(accountBody model.AccountData) (*model.Account, error) {
 	return accountService.accountOperations.CreateAccount(accountBody)
+}
+
+func (accountService AccountService) IsHealthy() error {
+	return accountService.accountOperations.IsHealthy()
 }

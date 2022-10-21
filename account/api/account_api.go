@@ -16,6 +16,7 @@ type AccountApi struct {
 	url string
 }
 
+const healthyPath = "/v1/health"
 const createAccountPath = "/v1/organisation/accounts"
 const getAllAccountsPath = "/v1/organisation/accounts"
 const getAccountPath = "/v1/organisation/accounts/%s"
@@ -50,6 +51,23 @@ func validUrl(urlString string) (bool, error) {
 
 func removeSlashEndOfHostname(url string) string {
 	return strings.TrimSuffix(url, "/")
+}
+
+func (form3Api AccountApi) IsHealthy() error {
+	resp, err := http.Get(form3Api.getUrl(healthyPath, nil))
+	if err != nil {
+		return fmt.Errorf("error checking healthy status. Error: %s", err)
+	}
+	defer resp.Body.Close()
+
+	var data model.HealhtyData
+	err = util.FromJsonToModel(resp.Body, &data)
+	if err != nil {
+		return fmt.Errorf("unable to parse json response for healthy status. Error: %s", err)
+	} else if data.Status != "up" {
+		return fmt.Errorf("healhthy status is not up, but %s", data.Status)
+	}
+	return nil
 }
 
 func (form3Api AccountApi) GetAccounts(filters map[string]string) ([]model.Account, error) {
@@ -102,7 +120,11 @@ func (form3Api AccountApi) DeleteAccount(id string, version int) error {
 
 	resp, err := http.DefaultClient.Do(req)
 
-	if err != nil && (resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK) {
+	if err != nil {
+		return fmt.Errorf("failed to delete account %s error: %s", id, err)
+	}
+
+	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
 		bytes, _ := io.ReadAll(resp.Body)
 		return fmt.Errorf("failed to delete account %s with status code %d response: %s", id, resp.StatusCode, string(bytes))
 	}

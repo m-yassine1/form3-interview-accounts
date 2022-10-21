@@ -1,5 +1,9 @@
 package model
 
+type HealhtyData struct {
+	Status string `json:"status,omitempty"`
+}
+
 type AccountsData struct {
 	Data []Account `json:"data,omitempty"`
 }

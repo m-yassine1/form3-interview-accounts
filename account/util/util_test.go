@@ -16,3 +16,11 @@ func TestJsonParsing(t *testing.T) {
 	assert.Empty(t, err)
 	assert.Equal(t, data.Data.ID, "6fc6ffaf-caa5-4f9f-a2ec-5c0aec46319e")
 }
+
+func TestUrlBuilding(t *testing.T) {
+	m := make(map[string]string)
+	m["k1"] = "test"
+	url := BuildUrl("test", "/hello", m)
+	assert.NotEmpty(t, url)
+	assert.Equal(t, url, "test/hello?k1=test&")
+}

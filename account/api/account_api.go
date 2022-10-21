@@ -2,6 +2,7 @@ package api
 
 import (
 	"account/model"
+	"account/util"
 	"bytes"
 	"encoding/json"
 	"fmt"
@@ -51,8 +52,8 @@ func removeSlashEndOfHostname(url string) string {
 	return strings.TrimSuffix(url, "/")
 }
 
-func (form3Api AccountApi) GetAccounts() ([]model.Account, error) {
-	resp, err := http.Get(form3Api.getUrl(getAllAccountsPath))
+func (form3Api AccountApi) GetAccounts(filters map[string]string) ([]model.Account, error) {
+	resp, err := http.Get(form3Api.getUrl(getAllAccountsPath, filters))
 	if err != nil {
 		return []model.Account{}, fmt.Errorf("error fetching list of accounts. Error: %s", err)
 	}
@@ -64,7 +65,7 @@ func (form3Api AccountApi) GetAccounts() ([]model.Account, error) {
 	}
 
 	var data model.AccountsData
-	err = FromJsonToModel(resp.Body, &data)
+	err = util.FromJsonToModel(resp.Body, &data)
 	if err != nil {
 		return []model.Account{}, fmt.Errorf("unable to parse json response for list of accounts. Error: %s", err)
 	}
@@ -73,7 +74,7 @@ func (form3Api AccountApi) GetAccounts() ([]model.Account, error) {
 }
 
 func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
-	resp, err := http.Get(form3Api.getUrl(fmt.Sprintf(getAccountPath, id)))
+	resp, err := http.Get(form3Api.getUrl(fmt.Sprintf(getAccountPath, id), nil))
 	if err != nil {
 		return nil, fmt.Errorf("error fetching account %s. Error: %s", id, err)
 	}
@@ -85,7 +86,7 @@ func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
 	}
 
 	var data model.AccountData
-	err = FromJsonToModel(resp.Body, &data)
+	err = util.FromJsonToModel(resp.Body, &data)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse json response for account. Error: %s", err)
 	}
@@ -94,7 +95,7 @@ func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
 }
 
 func (form3Api AccountApi) DeleteAccount(id string, version int) error {
-	req, err := http.NewRequest(http.MethodDelete, form3Api.getUrl(fmt.Sprintf(deleteAccountPath, id, version)), nil)
+	req, err := http.NewRequest(http.MethodDelete, form3Api.getUrl(fmt.Sprintf(deleteAccountPath, id, version), nil), nil)
 	if err != nil {
 		return fmt.Errorf("error creating delete account %s. Error: %s", id, err)
 	}
@@ -115,7 +116,7 @@ func (form3Api AccountApi) CreateAccount(account model.AccountData) (*model.Acco
 		return nil, fmt.Errorf("error parsing request account body %#v. Error: %s", account, err)
 	}
 
-	resp, err := http.Post(form3Api.getUrl(createAccountPath), applicationJsonContentType, bytes.NewBuffer(marshaledData))
+	resp, err := http.Post(form3Api.getUrl(createAccountPath, nil), applicationJsonContentType, bytes.NewBuffer(marshaledData))
 	if err != nil {
 		return nil, fmt.Errorf("error creating account %#v. Error: %s", account, err)
 	}
@@ -127,7 +128,7 @@ func (form3Api AccountApi) CreateAccount(account model.AccountData) (*model.Acco
 	}
 
 	var data model.AccountData
-	err = FromJsonToModel(resp.Body, &data)
+	err = util.FromJsonToModel(resp.Body, &data)
 	if err != nil {
 		return nil, fmt.Errorf("unable to parse json response for creating account. Error: %s", err)
 	}
@@ -135,6 +136,6 @@ func (form3Api AccountApi) CreateAccount(account model.AccountData) (*model.Acco
 	return &data.Data, nil
 }
 
-func (form3Api AccountApi) getUrl(path string) string {
-	return form3Api.url + path
+func (form3Api AccountApi) getUrl(path string, filters map[string]string) string {
+	return util.BuildUrl(form3Api.url, path, filters)
 }

@@ -1,39 +1,45 @@
 package service
 
 import (
-	"account/api"
 	"account/model"
 	"fmt"
 )
 
-type AccountService struct {
-	accountApi *api.AccountApi
+type AccountOperations interface {
+	GetAccounts(filters map[string]string) ([]model.Account, error)
+	GetAccount(id string) (*model.Account, error)
+	DeleteAccount(id string, version int) error
+	CreateAccount(accountBody model.AccountData) (*model.Account, error)
 }
 
-func NewAccountService(form3Api *api.AccountApi) (*AccountService, error) {
-	if form3Api == nil {
+type AccountService struct {
+	accountOperations AccountOperations
+}
+
+func NewAccountService(accountOperations AccountOperations) (*AccountService, error) {
+	if accountOperations == nil {
 		return nil, fmt.Errorf("error creating account service, fromApi is nil")
 	}
 
 	accountService := AccountService{
-		accountApi: form3Api,
+		accountOperations: accountOperations,
 	}
 
 	return &accountService, nil
 }
 
-func (accountService AccountService) GetAccounts() ([]model.Account, error) {
-	return accountService.accountApi.GetAccounts()
+func (accountService AccountService) GetAccounts(filters map[string]string) ([]model.Account, error) {
+	return accountService.accountOperations.GetAccounts(filters)
 }
 
 func (accountService AccountService) GetAccount(id string) (*model.Account, error) {
-	return accountService.accountApi.GetAccount(id)
+	return accountService.accountOperations.GetAccount(id)
 }
 
 func (accountService AccountService) DeleteAccount(id string, version int) error {
-	return accountService.accountApi.DeleteAccount(id, version)
+	return accountService.accountOperations.DeleteAccount(id, version)
 }
 
 func (accountService AccountService) CreateAccount(accountBody model.AccountData) (*model.Account, error) {
-	return accountService.accountApi.CreateAccount(accountBody)
+	return accountService.accountOperations.CreateAccount(accountBody)
 }

@@ -1,7 +1,6 @@
-package test
+package api
 
 import (
-	"account/api"
 	"fmt"
 	"testing"
 
@@ -12,21 +11,21 @@ import (
 var hostname = "http://localhost:8080"
 
 func TestApiCreation(t *testing.T) {
-	accountApi, err := api.NewAccountApi("")
+	accountApi, err := NewAccountApi("")
 	assert.NotEmpty(t, err, "Error is empty")
 	assert.Empty(t, accountApi, "Account API is not empty")
 
-	accountApi, err = api.NewAccountApi("test")
-	assert.NotEmpty(t, err, "Error is empty")
-	assert.Empty(t, accountApi, "Account API is not empty")
+	accountApi, err = NewAccountApi("test")
+	assert.NotEmpty(t, err, "Error is empty for invalid hostname")
+	assert.Empty(t, accountApi, "Account API is not empty for invalid hostname")
 
-	accountApi, err = api.NewAccountApi(hostname)
-	assert.Empty(t, err, "Error is not empty")
-	assert.NotEmpty(t, accountApi, "Account API is empty")
+	accountApi, err = NewAccountApi(hostname)
+	assert.Empty(t, err, "Error is not empty for valid hostname")
+	assert.NotEmpty(t, accountApi, "Account API is empty for valid hostname")
 }
 
 func TestGetAccounts(t *testing.T) {
-	accountApi, _ := api.NewAccountApi(hostname)
+	accountApi, _ := NewAccountApi(hostname)
 	httpmock.Activate()
 	defer httpmock.DeactivateAndReset()
 	httpmock.RegisterResponder("GET", fmt.Sprintf("%s/v1/organisation/accounts", hostname),

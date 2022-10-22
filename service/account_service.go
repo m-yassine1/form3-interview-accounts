@@ -3,6 +3,7 @@ package service
 import (
 	"fmt"
 	"form3-interview-accounts/model"
+	"form3-interview-accounts/util"
 )
 
 type AccountOperations interface {
@@ -41,10 +42,32 @@ func (accountService AccountService) DeleteAccount(id string, version int) error
 	return accountService.accountOperations.DeleteAccount(id, version)
 }
 
-func (accountService AccountService) CreateAccount(accountBody model.AccountData) (*model.Account, error) {
-	return accountService.accountOperations.CreateAccount(accountBody)
+func (accountService AccountService) CreateAccount(accountData model.AccountData) (*model.Account, error) {
+	err := validateAccount(accountData)
+	if err != nil {
+		return nil, err
+	}
+	return accountService.accountOperations.CreateAccount(accountData)
 }
 
 func (accountService AccountService) IsHealthy() error {
 	return accountService.accountOperations.IsHealthy()
+}
+
+func validateAccount(body model.AccountData) error {
+	if body.Data.Attributes == nil {
+		return fmt.Errorf("invalid body, attributes is missing")
+	}
+
+	if body.Data.Attributes.Country == nil {
+		return fmt.Errorf("invalid country, country is missing")
+	}
+
+	for _, val := range util.GetSupportedCountries() {
+		if val == *body.Data.Attributes.Country {
+			return nil
+		}
+	}
+
+	return fmt.Errorf("invalid country %s", *body.Data.Attributes.Country)
 }

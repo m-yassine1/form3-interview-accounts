@@ -27,3 +27,7 @@ func buildQueryParams(queryParameters map[string]string) string {
 
 	return queryParamString
 }
+
+func GetSupportedCountries() []string {
+	return []string{"GB", "AU", "BE", "CA", "DK", "FO", "GL", "EE", "FI", "FR", "DE", "GR", "HK", "IE", "IT", "LU", "NL", "PL", "PT", "ES", "SE", "CH", "US"}
+}

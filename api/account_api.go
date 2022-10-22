@@ -1,11 +1,11 @@
 package api
 
 import (
-	"account/model"
-	"account/util"
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"form3-interview-accounts/model"
+	"form3-interview-accounts/util"
 	"io"
 	"net/http"
 	"net/url"
@@ -60,7 +60,7 @@ func (form3Api AccountApi) IsHealthy() error {
 	}
 	defer resp.Body.Close()
 
-	var data model.HealhtyData
+	var data model.HealthyData
 	err = util.FromJsonToModel(resp.Body, &data)
 	if err != nil {
 		return fmt.Errorf("unable to parse json response for healthy status. Error: %s", err)
@@ -78,8 +78,8 @@ func (form3Api AccountApi) GetAccounts(filters map[string]string) ([]model.Accou
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		bytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("error fetching accounts with status %d response: %s", resp.StatusCode, string(bytes))
+		readBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("error fetching accounts with status %d response: %s", resp.StatusCode, string(readBytes))
 	}
 
 	var data model.AccountsData
@@ -99,8 +99,8 @@ func (form3Api AccountApi) GetAccount(id string) (*model.Account, error) {
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		bytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("error fetching account %s with status %d response: %s", id, resp.StatusCode, string(bytes))
+		readBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("error fetching account %s with status %d response: %s", id, resp.StatusCode, string(readBytes))
 	}
 
 	var data model.AccountData
@@ -125,8 +125,8 @@ func (form3Api AccountApi) DeleteAccount(id string, version int) error {
 	}
 
 	if resp.StatusCode != http.StatusNoContent && resp.StatusCode != http.StatusOK {
-		bytes, _ := io.ReadAll(resp.Body)
-		return fmt.Errorf("failed to delete account %s with status code %d response: %s", id, resp.StatusCode, string(bytes))
+		readBytes, _ := io.ReadAll(resp.Body)
+		return fmt.Errorf("failed to delete account %s with status code %d response: %s", id, resp.StatusCode, string(readBytes))
 	}
 
 	return nil
@@ -145,8 +145,8 @@ func (form3Api AccountApi) CreateAccount(account model.AccountData) (*model.Acco
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusCreated {
-		bytes, _ := io.ReadAll(resp.Body)
-		return nil, fmt.Errorf("faile to create account with status %d response: %s", resp.StatusCode, string(bytes))
+		readBytes, _ := io.ReadAll(resp.Body)
+		return nil, fmt.Errorf("faile to create account with status %d response: %s", resp.StatusCode, string(readBytes))
 	}
 
 	var data model.AccountData

@@ -1,4 +1,4 @@
-module account
+module form3-interview-accounts
 
 go 1.19
 

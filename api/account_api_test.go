@@ -1,8 +1,8 @@
 package api
 
 import (
-	"account/model"
 	"fmt"
+	"form3-interview-accounts/model"
 	"testing"
 
 	"github.com/google/uuid"

@@ -1,7 +1,7 @@
 package util
 
 import (
-	"account/model"
+	"form3-interview-accounts/model"
 	"io"
 	"strings"
 	"testing"

@@ -1,6 +1,6 @@
 package model
 
-type HealhtyData struct {
+type HealthyData struct {
 	Status string `json:"status,omitempty"`
 }
 

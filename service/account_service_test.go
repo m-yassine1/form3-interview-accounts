@@ -1,11 +1,12 @@
 package service
 
 import (
-	"account/api"
-	"account/model"
 	"fmt"
+	"form3-interview-accounts/api"
+	"form3-interview-accounts/model"
 	"os"
 	"testing"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
@@ -16,7 +17,8 @@ var hostname = "http://localhost:8080"
 func TestMain(m *testing.M) {
 	accountService, _ := getAccountService()
 	for accountService.IsHealthy() != nil {
-		fmt.Println("service is not yet up")
+		fmt.Println("service is not yet up. Sleeping for 5 seconds")
+		time.Sleep(5 * time.Second)
 	}
 
 	accounts, err := accountService.GetAccounts(nil)

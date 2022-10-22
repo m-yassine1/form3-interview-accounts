@@ -1,8 +1,8 @@
 package service
 
 import (
-	"account/model"
 	"fmt"
+	"form3-interview-accounts/model"
 )
 
 type AccountOperations interface {

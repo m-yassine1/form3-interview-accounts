@@ -2,7 +2,7 @@ package service
 
 import (
 	"fmt"
-	"form3-interview-accounts/internal"
+	"form3-interview-accounts/internal/validation"
 	"form3-interview-accounts/model"
 )
 
@@ -43,7 +43,7 @@ func (accountService AccountService) DeleteAccount(id string, version int) error
 }
 
 func (accountService AccountService) CreateAccount(accountData model.AccountData) (*model.Account, error) {
-	err := internal.ValidateAccount(accountData)
+	err := validation.ValidateAccount(accountData)
 	if err != nil {
 		return nil, err
 	}

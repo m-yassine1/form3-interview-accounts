@@ -1,9 +1,9 @@
-package internal
+package validation
 
 import (
 	"fmt"
+	"form3-interview-accounts/internal/util"
 	"form3-interview-accounts/model"
-	"form3-interview-accounts/util"
 )
 
 func ValidateAccount(body model.AccountData) error {
